@@ -1,0 +1,15 @@
+package com.chess
+
+import org.scalatra._
+import org.scalatest._
+import org.scalatest.matchers._
+
+class MyScalatraFilterSuite extends ScalatraFunSuite with ShouldMatchers {
+  addFilter(classOf[MyScalatraFilter], "/*")
+
+  test("GET / returns status 200") {
+    get("/") { 
+      status should equal (200)
+    }
+  }
+}
