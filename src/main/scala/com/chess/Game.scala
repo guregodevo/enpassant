@@ -46,6 +46,10 @@ class Board(cases:List[List[Piece]],c:Char,castlingK:Boolean,castlingQ:Boolean, 
 	  }
   }
 
+  def algebraic(t:Pair[Int,Int]) = {
+		file(t._1).getOrElse("") + (t._2+1).toString   
+  }
+  
   def piece(t:Pair[Int,Int]):Option[Piece] = {
 	  piece(t._1,t._2)
   }
@@ -81,7 +85,7 @@ class Board(cases:List[List[Piece]],c:Char,castlingK:Boolean,castlingQ:Boolean, 
   {
 	  this.enPassant match {
 	 	  case None => "-"
-	 	  case Some((x,y)) => (file(x).getOrElse("") + (y+1).toString )  
+	 	  case Some((x,y)) => algebraic((x,y))  
 	  }
   }  
   
@@ -89,7 +93,7 @@ class Board(cases:List[List[Piece]],c:Char,castlingK:Boolean,castlingQ:Boolean, 
 	  val turn = -|(cases)
 	  val fen = for { i<-(0 to 7).reverse } yield toFEN(turn(i),0)
 	  
-	  fen.elements.mkString("/") + List(this.c,castlingFEN,enpassantFEN,this.halfMv,this.fullMv).mkString(" ")
+	  fen.elements.mkString("/") + " " + List(this.c,castlingFEN,enpassantFEN,this.halfMv,this.fullMv).mkString(" ")
   }
 
   def toFEN(row:List[Piece],countO:Int):String = {
@@ -121,6 +125,12 @@ class Board(cases:List[List[Piece]],c:Char,castlingK:Boolean,castlingQ:Boolean, 
 	 	 	  case Nil => l
 	 	  }
 	  }
+	  var enPassantPawn:Option[Pair[Int,Int]] = None;
+	  if (this.c=='w' && from._2==1 && to._2==3)
+	    enPassantPawn=Some(to)
+	  else if (this.c=='b' && from._2==6 && to._2==4)
+	    enPassantPawn=Some(to)
+	    
 	  val color = (if (this.c == 'w') 'b' else 'w' )
 	  //p match {
 	 //	  case K('w') => this.castlingK;
@@ -129,7 +139,7 @@ class Board(cases:List[List[Piece]],c:Char,castlingK:Boolean,castlingQ:Boolean, 
 	  //TODO roque / grand roque
 	  //en passant
 	  
-	  Board(repFiles(0,cases),color,this.castlingK, this.castlingQ, this.castlingk, this.castlingq, enPassant, this.halfMv+1, this.fullMv+1)
+	  Board(repFiles(0,cases),color,this.castlingK, this.castlingQ, this.castlingk, this.castlingq, enPassantPawn, this.halfMv+1, this.fullMv+1)
   }
 
   def ---(p:Pair[Int,Int],f: Pair[Int,Int] => Pair[Int,Int]):List[Pair[Int,Int]] = {
@@ -197,6 +207,50 @@ class Board(cases:List[List[Piece]],c:Char,castlingK:Boolean,castlingQ:Boolean, 
 	  } )
   }
 
+  def legalPawnTakes(p:Pair[Int,Int]):List[Pair[Int,Int]] = {
+    val f = piece(p)
+	  val takes = f match {
+	    case Some(x:Piece) if (x.color=='w')  => (%%(+^(),>>()))::(%%(+^(),<<()))::Nil
+	    case Some(x:Piece) if (x.color=='b')  => (%%(-^(),>>()))::(%%(-^(),<<()))::Nil
+	    case _ => Nil
+	  }
+
+	  takes.map(t => t(p)).filter( t => piece(t) match {
+	 	  case Some(O) => false
+	 	  case Some(x:Piece) if (x.color!=f.get.color) => true
+	 	  case _ => false
+	  } )	  
+  }
+  
+  def pawny(p:Pair[Int,Int]):List[Pair[Int,Int]] = {
+	  val f = piece(p)
+	  val mvs = f match {
+	    case Some(P('w')) if (p._2==1)=> +^()::(%%(+^(),+^()))::Nil
+	    case Some(P('w')) if (p._2!=1)=> +^()::Nil
+	    case Some(P('b')) if (p._2==6)=> -^()::(%%(-^(),-^()))::Nil
+	    case Some(P('b')) if (p._2!=6)=> -^()::Nil
+	    case _ => Nil
+	  }
+	  
+	  val legalMvs = mvs.map(m => m(p)).filter( t => piece(t) match {
+	 	  case Some(O) => true
+	 	  case _ => false
+	  } )
+	  
+	  var enPassantMv:List[Pair[Int,Int]] = Nil
+	  if (this.enPassant != None) {
+	    val dist = ( this.enPassant.get._1 - p._1 )	    
+	    if (dist==1 || dist== -1)
+	    {
+		    if (this.c=='b' && p._2==3)
+		      enPassantMv= (this.enPassant.get._1,p._2 - 1 )::Nil
+		      else if (this.c=='w' && p._2==4) 
+		        enPassantMv= (this.enPassant.get._1,p._2 + 1 )::Nil
+	    }
+	  }
+	  legalMvs++enPassantMv++legalPawnTakes(p)
+  }
+
   def where(p:Piece):Option[(Int,Int)] = {
 	 val coords = for { 
 	 	  i <- (0 to 7)
@@ -224,7 +278,6 @@ class Board(cases:List[List[Piece]],c:Char,castlingK:Boolean,castlingQ:Boolean, 
 
   def check(c:Char):Boolean = {
 		  val t = where(K(c)).get
-		  val p = K(c)
 		  check(t,c)
   }
   
@@ -248,10 +301,10 @@ class Board(cases:List[List[Piece]],c:Char,castlingK:Boolean,castlingQ:Boolean, 
 	     	  case Some(d:K) if d.color != c => true
 	     	  case _ => false
 	      })      
-	      lazy val pawnCheck = ((%%(<<(),+^()))::(%%(>>(),+^()))::Nil).map(f => f(t)).exists(x => piece(x) match {
+	      lazy val pawnCheck = legalPawnTakes(t).exists(x => piece(x) match {
 	     	  case Some(d:P) if d.color != c => true
 	     	  case _ => false
-	      })	      
+	      })
 	      straightcheck || diagonalcheck || knightCheck || reyCheck || pawnCheck
   }
   
@@ -261,6 +314,7 @@ class Board(cases:List[List[Piece]],c:Char,castlingK:Boolean,castlingQ:Boolean, 
 			case Some(r:R) => straight(p) 
 			case Some(b:B) => diagonal(p)
 			case Some(r:Q) => straight(p)++diagonal(p)
+			case Some(pp:P) => pawny(p)		  
 			case Some(r:N) => knighty(p)		   
 			case Some(r:K) => Nil			   
 			case Some(O) => Nil			   
@@ -284,7 +338,7 @@ object Board {
 		 val d  = Q('w')::P('w')::O::O::O::O::P('b')::Q('b')::Nil
 		 val e  = K('w')::P('w')::O::O::O::O::P('b')::K('b')::Nil
 		 val l:List[List[Piece]] = List(ah,bg,cf,d,e,cf,bg,ah)
-		 val y = new Board(l,'w', true, true, true, true ,None,0,1)
+		 val y = new Board(l,'b', true, true, true, true ,None,0,1)
 		 y
 	}
 

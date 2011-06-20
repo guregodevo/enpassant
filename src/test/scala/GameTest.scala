@@ -72,12 +72,38 @@ class BoardTest extends Spec with ShouldMatchers {
       q.check('w') should be (false)
       q.checkmate('w') should be (false)
       val r = q.<->((3,7),(7,3))
-      r.printit
       r.check('w') should be (true)
       r.checkmate('w') should be (true)
       r.check('b') should be (false)
     }
   }
 
+  describe("Board") {
+    it("en passant") {
+      val l = Board()
+      val m = l.<->((6,1),(6,3))
+      val n = m.<->((2,6),(2,4))
+      val o = n.<->((6,3),(6,4))
+      val p = o.<->((2,4),(2,3))
+      val q = p.<->((5,6),(5,4))
+      q.legalMoves(6,4) should be (List((6,5), (5,5)))
+      q.legalMoves(2,1) should be (List((2,2)))
+      q.legalMoves(0,1) should be (List((0,2),(0,3)))
+      q.legalMoves(0,6) should be (List((0,5),(0,4)))
+      q.legalMoves(2,3) should be (List((2,2)))
+      val r = q <-> ((2,3),(2,2))
+      r.legalMoves(2,2) should be (List((3,1),(1,1)))
+      r.legalMoves(1,1) should be (List((1,2),(1,3),(2,2)))
+      val s = r.<-> ((4,1),(4,3))
+      s.check('w') should be (false)
+      val t = s.<->((2,2), (3,1))
+      t.printit
+      t.check('w') should be (true)
+      //t.legalMoves(4,0) should be (List((3,1),(4,1)))
+      
+    }
+  }
 
+  
+  
 }
