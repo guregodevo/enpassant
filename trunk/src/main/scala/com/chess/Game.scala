@@ -271,9 +271,25 @@ class Board(cases:List[List[Piece]],c:Char,castlingK:Boolean,castlingQ:Boolean, 
       })
   }
 
+  def getPiecesCoordOfColor(c:Char):Seq[Pair[Int,Int]] = {
+    	 val coords = for { 
+	 	  i <- (0 to 7)
+	 	  j <- (0 to 7)	
+	 	  }	 	  
+	 	 yield (i,j)
+	 coords.filter(x => piece(x) match {
+		     								case Some(O) => false
+		     								case Some(p:Piece) if p.color == c => true
+		     								case _ => false
+		   							}
+		   )
+	
+
+  }
+  
   def checkmate(c:Char):Boolean = {
-	  val t = where(K(c)).get
-	  royal( t ).forall(x => check(x,c) )
+	  val t = where(K(c)).get	  
+	  check(c) && getPiecesCoordOfColor( c ).exists( x => this.legalMoves(x).exists( y => !this.<->(x,y).check(t,c) )  ) 
   }
 
   def check(c:Char):Boolean = {
@@ -282,7 +298,6 @@ class Board(cases:List[List[Piece]],c:Char,castlingK:Boolean,castlingQ:Boolean, 
   }
   
   def check(t:(Int,Int),c:Char):Boolean = {
-		  val p = K(c)
 	      lazy val straightcheck = straight(t).exists(x => piece(x) match {
 	     	  case Some(d:Q) if d.color != c => true
 	     	  case Some(d:R) if d.color != c => true
@@ -316,7 +331,7 @@ class Board(cases:List[List[Piece]],c:Char,castlingK:Boolean,castlingQ:Boolean, 
 			case Some(r:Q) => straight(p)++diagonal(p)
 			case Some(pp:P) => pawny(p)		  
 			case Some(r:N) => knighty(p)		   
-			case Some(r:K) => Nil			   
+			case Some(r:K) => royal(p)			   
 			case Some(O) => Nil			   
 			case _ => Nil
 	  }
