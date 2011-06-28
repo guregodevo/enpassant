@@ -27,8 +27,7 @@ class ParsingTest extends Spec with ShouldMatchers {
        	}
        	val b = Board(order(fres), 'w', false, true, false, false ,Some((0,0)),0,4)
 
-       	b.printit
-    	print(b.toFEN()) 
+    	//print(b.toFEN()) 
     }
   }
   

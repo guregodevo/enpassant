@@ -13,10 +13,13 @@ import scala.math._;
  }
  
 class Board(cases:List[List[Piece]],c:Char,castlingK:Boolean,castlingQ:Boolean, castlingk:Boolean,castlingq:Boolean,enPassant:Option[Pair[Int,Int]],halfMv:Int,fullMv:Int) {
- 
+	lazy val KING_ORIGINAL_POSITION = Map( 'b' -> (4,7), 'w' -> (4,0) )
+	lazy val ROOK_QUEENSIDE_POSITION = Map( 'b' -> (0,7), 'w' -> (0,0) )
+	lazy val ROOK_KINGSIDE_POSITION = Map( 'b' -> (7,7), 'w' -> (7,0) )
+	
 	implicit def tupleConvertor(x: Tuple2[Int,Int]): Position = {
-	new Position(x._1,x._2) 
-}
+			new Position(x._1,x._2) 
+	}
 
   def file(c:Char):Option[Int] = {
 	  c match {
@@ -87,7 +90,7 @@ class Board(cases:List[List[Piece]],c:Char,castlingK:Boolean,castlingQ:Boolean, 
 	 	  case None => "-"
 	 	  case Some((x,y)) => algebraic((x,y))  
 	  }
-  }  
+  }
   
   def toFEN():String = {
 	  val turn = -|(cases)
@@ -104,53 +107,117 @@ class Board(cases:List[List[Piece]],c:Char,castlingK:Boolean,castlingQ:Boolean, 
 	  }	  
   }
 
-  def printit() = {
+  def prettyPrint() = {
 	  for { i<-(0 to 7).reverse	
 	 	    j<-(0 to 7)}
 	   {
 	   print("|"+cases(j)(i).toString)
 	   if (j==7) println ("|")
 	   }
+	   println(this.toFEN())
   }
-	  
+
+  def castleKingside(p:Piece, from:Pair[Int,Int]):List[Pair[Int,Int]] = {    
+    val isPermissible = this.c match {
+      case 'w' => this.castlingK && canCastle(from, ---(from, >>()))
+      case 'b' => this.castlingk && canCastle(from, ---(from, >>()))
+      case _ => false
+    }
+    if (isPermissible) 
+      %%(>>(),>>())(from)::Nil 
+    else
+      Nil
+  }
+  
+  def castleQueenside(p:Piece, from:Pair[Int,Int]):List[Pair[Int,Int]] = {    
+    val isPermissible = this.c match {
+      case 'w' => this.castlingQ && canCastle(from, ---(from, <<()))
+      case 'b' => this.castlingq && canCastle(from, ---(from, <<()))
+      case _ => false
+    }
+    if (isPermissible) 
+      %%(<<(),<<())(from)::Nil 
+    else
+      Nil
+  }
+
+
+  def canCastleQueenSide(p:Option[Piece],from:Pair[Int,Int]) = {
+    p match {
+      case Some(R(color)) => ROOK_QUEENSIDE_POSITION(color) == from
+      case Some(K(color)) => KING_ORIGINAL_POSITION(color) == from 
+      case _ => true
+    }  
+  }
+  
+  def canCastleKingSide(p:Option[Piece],from:Pair[Int,Int]) = {
+    p match {
+      case Some(R(color)) => ROOK_KINGSIDE_POSITION(color) == from
+      case Some(K(color)) => KING_ORIGINAL_POSITION(color) == from 
+      case _ => true
+    }  
+  }
+    
+  def canCastle(from:Pair[Int,Int], castlingMoves : List[(Int,Int)]):Boolean = {
+    val noCheck = !this.check(this.c)
+    lazy val noPiecesBetween = castlingMoves.length == 2
+    lazy val dontPassThruSquareUnderAttack = castlingMoves.forall( x => !this.check(x,this.c))  
+    noCheck && noPiecesBetween && dontPassThruSquareUnderAttack
+  }
+
+  def <>(squares:List[List[Piece]], from:Pair[Int,Int],to:Pair[Int,Int]):List[List[Piece]] = {
+    def rep(i:Int, file:List[Piece]):List[Piece] = {
+	 	 val fromFile = if (i == from._1) squares(i).updated(from._2,O) else file
+	 	 if (i == to._1) fromFile.updated(to._2,squares(from._1)(from._2)) else fromFile
+	}
+	
+    def repFiles(i:Int, files:List[List[Piece]]):List[List[Piece]] = {
+	 	  files match {
+	 	 	  case x::xs => rep(i,x)::repFiles(i+1,xs)
+	 	 	  case Nil => files
+	 	  }
+	}
+    repFiles(0,squares)
+  }
+  
   def <->(from:Pair[Int,Int],to:Pair[Int,Int]):Board = {
 	  val p = piece(from._1,from._2)
-	  def rep(i:Int, file:List[Piece]):List[Piece] = {
-	 	 val c = if (i == from._1) cases(from._1).updated(from._2,O) else file
-	 	 if (i == to._1) c.updated(to._2,cases(from._1)(from._2)) else c
-	  }
-	  def repFiles(i:Int, l:List[List[Piece]]):List[List[Piece]] = {
-	 	  l match {
-	 	 	  case x::xs => rep(i,x)::repFiles(i+1,xs)
-	 	 	  case Nil => l
-	 	  }
-	  }
 	  var enPassantPawn:Option[Pair[Int,Int]] = None;
 	  if (this.c=='w' && from._2==1 && to._2==3)
 	    enPassantPawn=Some(to)
 	  else if (this.c=='b' && from._2==6 && to._2==4)
 	    enPassantPawn=Some(to)
-	    
-	  val color = (if (this.c == 'w') 'b' else 'w' )
-	  //p match {
-	 //	  case K('w') => this.castlingK;
-	 	//  case K('b') =>
-	  //}
-	  //TODO roque / grand roque
-	  //en passant
 	  
-	  Board(repFiles(0,cases),color,this.castlingK, this.castlingQ, this.castlingk, this.castlingq, enPassantPawn, this.halfMv+1, this.fullMv+1)
+	  var isCastlingK = (if (this.c == 'w') this.castlingK && canCastleKingSide(p, from) else this.castlingK )
+	  var isCastlingk = (if (this.c == 'b') this.castlingk && canCastleKingSide(p, from) else this.castlingk )
+	  var isCastlingQ = (if (this.c == 'w') this.castlingQ && canCastleQueenSide(p, from) else this.castlingQ )
+	  var isCastlingq = (if (this.c == 'b') this.castlingq && canCastleQueenSide(p, from) else this.castlingq )	    
+	  val sqrMved = (to._1 - from._1)	  
+	  val adjustedSquares = p match {
+	    case Some(K(this.c)) if (sqrMved == 2)=>	      	  
+	      		  val rookPos = ROOK_KINGSIDE_POSITION(this.c)
+	      		  <>(cases, rookPos,(rookPos._1 - 2, rookPos._2))
+	    case Some(K(this.c)) if (sqrMved == -2)=> 	      	  
+	      		  val rookPos = ROOK_QUEENSIDE_POSITION(this.c)
+	      		  <>(cases, rookPos,(rookPos._1 + 2, rookPos._2))
+	    case _ => cases
+	  }
+
+	  val color = (if (this.c == 'w') 'b' else 'w' )
+
+	  Board(<>(adjustedSquares,from,to),color,isCastlingK, isCastlingQ, isCastlingk, isCastlingq, enPassantPawn, this.halfMv+1, this.fullMv+1)
   }
 
+  
   def ---(p:Pair[Int,Int],f: Pair[Int,Int] => Pair[Int,Int]):List[Pair[Int,Int]] = {
 	  val next = f(p._1,p._2)
 	  piece(next) match {
 	 	  case Some(O) => next:: ---(next,f) 
-	 	  case Some(d:Piece) if d.sameColor(piece(p)) => Nil
+	 	  case Some(d:Piece) if d.color == this.c => Nil
 	 	  case None => Nil
 	 	  case _ => next:: ---(next,f)
 	   }
-  }
+  }  
   
   def <<():Pair[Int,Int]=>Pair[Int,Int] = {
 	  x => (x._1 -1, x._2 )
@@ -286,10 +353,19 @@ class Board(cases:List[List[Piece]],c:Char,castlingK:Boolean,castlingQ:Boolean, 
 	
 
   }
-  
+
+  def stalemate(t:(Int,Int)):Boolean = {
+	  getPiecesCoordOfColor( c ).exists( x => this.legalMoves(x).exists( y => !this.<->(x,y).check(t,c) )  ) 
+  }
+
+  def stalemate(c:Char):Boolean = {
+	  val t = where(K(c)).get
+	  stalemate(t) 
+  }
+    
   def checkmate(c:Char):Boolean = {
 	  val t = where(K(c)).get	  
-	  check(c) && getPiecesCoordOfColor( c ).exists( x => this.legalMoves(x).exists( y => !this.<->(x,y).check(t,c) )  ) 
+	  check(t, c) && stalemate(t) 
   }
 
   def check(c:Char):Boolean = {
@@ -331,7 +407,7 @@ class Board(cases:List[List[Piece]],c:Char,castlingK:Boolean,castlingQ:Boolean, 
 			case Some(r:Q) => straight(p)++diagonal(p)
 			case Some(pp:P) => pawny(p)		  
 			case Some(r:N) => knighty(p)		   
-			case Some(r:K) => royal(p)			   
+			case Some(r:K) => royal(p)++castleKingside(r, p)++castleQueenside(r, p)			   
 			case Some(O) => Nil			   
 			case _ => Nil
 	  }
@@ -353,7 +429,7 @@ object Board {
 		 val d  = Q('w')::P('w')::O::O::O::O::P('b')::Q('b')::Nil
 		 val e  = K('w')::P('w')::O::O::O::O::P('b')::K('b')::Nil
 		 val l:List[List[Piece]] = List(ah,bg,cf,d,e,cf,bg,ah)
-		 val y = new Board(l,'b', true, true, true, true ,None,0,1)
+		 val y = new Board(l,'w', true, true, true, true ,None,0,1)
 		 y
 	}
 
