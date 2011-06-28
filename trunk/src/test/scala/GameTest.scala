@@ -48,58 +48,47 @@ class BoardTest extends Spec with ShouldMatchers {
     it("is legal move") {
       val l = Board()
       l.legalMoves((0,0)).length should be (0)
-      val h = l.<->((0,1),(0,3))
-      val y = h.legalMoves(0,0)
-      h.piece(0,0).get should be (R('w'))
-      y should be (List((0,1),(0,2)))
+      val h = l.<->((0,6),(0,5)).<->((0,1),(0,3))
+      h.legalMoves(0,0) should be (List((0,1),(0,2)))
+      
       h.legal((0,0),(0,1)) should be (true)
       h.legal((0,0),(1,0)) should be (false)
       h.legalMoves(1,0) should be (List((2,2),(0,2)))
-      val m = h.<->((1,0),(2,2))
-      val n = m.<->((2,2),(3,4))
-      n.legalMoves(3,4) should be (List((4,6),(2,6),(2,2),(4,2),(1,5),(1,3),(5,5),(5,3)))      
+      val m = h.<->((1,0),(2,2)).<->((2,2),(3,4))
+      m.legalMoves(3,4) should be (List((4,6),(2,6),(2,2),(4,2),(1,5),(1,3),(5,5),(5,3)))      
     }
   }
 
   describe("Board") {
-    it("is check (checkmate)") {
+    it("is check or checkmate") {
       val l = Board()
-      val m = l.<->((6,1),(6,3))
-      val n = m.<->((4,6),(4,4))
-      val o = n.<->((5,1),(5,2))
-      val p = o.<->((3,6),(3,4))
-      val q = p.<->((1,0),(2,2))
-      q.check('w') should be (false)
-      q.checkmate('w') should be (false)
-      val r = q.<->((3,7),(7,3))
-      r.check('w') should be (true)
-      r.checkmate('w') should be (true)
-      r.check('b') should be (false)
+      val m = l.<->((6,1),(6,3)).<->((4,6),(4,4)).<->((5,1),(5,2)).<->((3,6),(3,4)).<->((1,0),(2,2))
+      m.check('w') should be (false)
+      m.checkmate('w') should be (false)
+      val n = m.<->((3,7),(7,3))
+      n.check('w') should be (true)
+      n.checkmate('w') should be (true)
+      n.check('b') should be (false)
     }
   }
 
   describe("Board") {
-    it("en passant") {
+    it("pawn move is legal or en passant") {
       val l = Board()
-      val m = l.<->((6,1),(6,3))
-      val n = m.<->((2,6),(2,4))
-      val o = n.<->((6,3),(6,4))
-      val p = o.<->((2,4),(2,3))
-      val q = p.<->((5,6),(5,4))
-      q.legalMoves(6,4) should be (List((6,5), (5,5)))
-      q.legalMoves(2,1) should be (List((2,2)))
-      q.legalMoves(0,1) should be (List((0,2),(0,3)))
-      q.legalMoves(0,6) should be (List((0,5),(0,4)))
-      q.legalMoves(2,3) should be (List((2,2)))
-      val r = q <-> ((2,3),(2,2))
-      r.legalMoves(2,2) should be (List((3,1),(1,1)))
-      r.legalMoves(1,1) should be (List((1,2),(1,3),(2,2)))
-      val s = r.<-> ((4,1),(4,3))
-      s.check('w') should be (false)
-      val t = s.<->((2,2), (3,1))
-      t.printit
-      t.check('w') should be (true)
-      t.legalMoves(4,0) should be (List((4,1),(3,1)))
+      val m = l.<->((6,1),(6,3)).<->((2,6),(2,4)).<->((6,3),(6,4)).<->((2,4),(2,3)).<->((0,1),(0,2)).<->((5,6),(5,4))
+      m.legalMoves(6,4) should be (List((6,5), (5,5)))
+      m.legalMoves(2,1) should be (List((2,2)))
+      m.legalMoves(3,1) should be (List((3,2),(3,3)))
+      m.legalMoves(0,6) should be (List((0,5),(0,4)))
+      m.legalMoves(2,3) should be (List((2,2)))
+      val n = m <-> ((2,3),(2,2))
+      n.legalMoves(2,2) should be (List((3,1),(1,1)))
+      n.legalMoves(1,1) should be (List((1,2),(1,3),(2,2)))
+      val o = n.<-> ((4,1),(4,3))
+      o.check('w') should be (false)
+      val p = o.<->((2,2), (3,1))
+      p.check('w') should be (true)
+      p.legalMoves(4,0) should be (List((4,1),(3,1)))
       
     }
   }
@@ -107,28 +96,40 @@ class BoardTest extends Spec with ShouldMatchers {
   describe("Board") {
     it("stalemate") {
       val l = Board()
-      val m = l.<->((6,1),(6,3))
-      val n = m.<->((2,6),(2,4))
-      val o = n.<->((6,3),(6,4))
-      val p = o.<->((2,4),(2,3))
-      val q = p.<->((5,6),(5,4))
-      q.legalMoves(6,4) should be (List((6,5), (5,5)))
-      q.legalMoves(2,1) should be (List((2,2)))
-      q.legalMoves(0,1) should be (List((0,2),(0,3)))
-      q.legalMoves(0,6) should be (List((0,5),(0,4)))
-      q.legalMoves(2,3) should be (List((2,2)))
-      val r = q <-> ((2,3),(2,2))
-      r.legalMoves(2,2) should be (List((3,1),(1,1)))
-      r.legalMoves(1,1) should be (List((1,2),(1,3),(2,2)))
-      val s = r.<-> ((4,1),(4,3))
-      s.check('w') should be (false)
-      val t = s.<->((2,2), (3,1))
-      t.printit
-      t.check('w') should be (true)
-      t.legalMoves(4,0) should be (List((4,1),(3,1)))
+      val m = l.<->((6,1),(6,3)).<->((2,6),(2,4)).<->((6,3),(6,4)).<->((2,4),(2,3)).<->((5,6),(5,4)).<->((7,6),(7,5))
+      m.legalMoves(6,4) should be (List((6,5), (7,5)))
+      val n = m <-> ((2,3),(2,2))
+      n.legalMoves(2,2) should be (List((3,1),(1,1)))
+      n.legalMoves(1,1) should be (List((1,2),(1,3),(2,2)))
+      val o = n.<-> ((4,1),(4,3))
+      o.check('w') should be (false)
+      val p = o.<->((2,2), (3,1))
+      p.check('w') should be (true)
+      p.legalMoves(4,0) should be (List((4,1),(3,1)))
       
     }
   }
   
+  describe("Board") {
+    it("Black and White kingside castling") {
+      val l = Board()
+      val m = l.<->((5,1),(5,3)).<->((6,6),(6,5)).<->((6,0),(5,2)).<->((0,6),(0,5)).<->((4,1),(4,2)).<->((5,7),(6,6))
+      m.legalMoves(4,7) should be (List((5,7)))
+      m.legalMoves(4,0) should be (List((4,1),(5,1)))
+      val n = m.<->((5,0),(4,1)).<->((6,7),(5,5))
+      n.prettyPrint
+      
+      n.legalMoves(4,0) should be (List((5,0),(5,1),(6,0)))
+      
+      val o = n.<->((4,0),(6,0))
+      o.piece(5,0).get should be (R('w'))
+      o.piece(6,0).get should be (K('w'))
+      
+      o.prettyPrint
+      
+      o.legalMoves(4,7) should be (List((5,7),(6,7)))
+      
+    }
+  }
   
 }
