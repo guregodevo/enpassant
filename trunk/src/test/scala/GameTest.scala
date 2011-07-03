@@ -5,10 +5,10 @@ import org.scalatest.Spec
 import com.chess._
 
 @RunWith(classOf[JUnitRunner])
-class BoardTest extends Spec with ShouldMatchers {
-  describe("Board") {
+class ChessBoardTest extends Spec with ShouldMatchers {
+  describe("ChessBoard") {
     it("should be instanted properly") {
-    	val l = Board()
+    	val l = ChessBoard()
     	l.piece(0,0).get should be (R('w'))
     	l.piece(1,3).get should be (O)    	
     	l.piece(6,7).get should be (N('b'))
@@ -20,7 +20,7 @@ class BoardTest extends Spec with ShouldMatchers {
   
   describe("Dummy game") {
     it("should be working") {
-      val f = Board().<->((4,1),(4,3))
+      val f = ChessBoard().<->((4,1),(4,3))
       f.piece(4,1).get should be (O)
       f.piece(4,3).get should be (P('w'))
       val g= f.<->((4,6),(4,4))
@@ -44,9 +44,9 @@ class BoardTest extends Spec with ShouldMatchers {
     }
   }
 
-  describe("Board") {
+  describe("ChessBoard") {
     it("is legal move") {
-      val l = Board()
+      val l = ChessBoard()
       l.legalMoves((0,0)).length should be (0)
       val h = l.<->((0,6),(0,5)).<->((0,1),(0,3))
       h.legalMoves(0,0) should be (List((0,1),(0,2)))
@@ -59,9 +59,9 @@ class BoardTest extends Spec with ShouldMatchers {
     }
   }
 
-  describe("Board") {
+  describe("ChessBoard") {
     it("is check or checkmate") {
-      val l = Board()
+      val l = ChessBoard()
       val m = l.<->((6,1),(6,3)).<->((4,6),(4,4)).<->((5,1),(5,2)).<->((3,6),(3,4)).<->((1,0),(2,2))
       m.check('w') should be (false)
       m.checkmate('w') should be (false)
@@ -72,9 +72,9 @@ class BoardTest extends Spec with ShouldMatchers {
     }
   }
 
-  describe("Board") {
+  describe("ChessBoard") {
     it("pawn move is legal or en passant") {
-      val l = Board()
+      val l = ChessBoard()
       val m = l.<->((6,1),(6,3)).<->((2,6),(2,4)).<->((6,3),(6,4)).<->((2,4),(2,3)).<->((0,1),(0,2)).<->((5,6),(5,4))
       m.legalMoves(6,4) should be (List((6,5), (5,5)))
       m.legalMoves(2,1) should be (List((2,2)))
@@ -93,9 +93,9 @@ class BoardTest extends Spec with ShouldMatchers {
     }
   }
 
-  describe("Board") {
+  describe("ChessBoard") {
     it("stalemate") {
-      val l = Board()
+      val l = ChessBoard()
       val m = l.<->((6,1),(6,3)).<->((2,6),(2,4)).<->((6,3),(6,4)).<->((2,4),(2,3)).<->((5,6),(5,4)).<->((7,6),(7,5))
       m.legalMoves(6,4) should be (List((6,5), (7,5)))
       val n = m <-> ((2,3),(2,2))
@@ -110,14 +110,13 @@ class BoardTest extends Spec with ShouldMatchers {
     }
   }
   
-  describe("Board") {
+  describe("ChessBoard") {
     it("Black and White kingside castling") {
-      val l = Board()
+      val l = ChessBoard()
       val m = l.<->((5,1),(5,3)).<->((6,6),(6,5)).<->((6,0),(5,2)).<->((0,6),(0,5)).<->((4,1),(4,2)).<->((5,7),(6,6))
       m.legalMoves(4,7) should be (List((5,7)))
       m.legalMoves(4,0) should be (List((4,1),(5,1)))
       val n = m.<->((5,0),(4,1)).<->((6,7),(5,5))
-      n.prettyPrint
       
       n.legalMoves(4,0) should be (List((5,0),(5,1),(6,0)))
       

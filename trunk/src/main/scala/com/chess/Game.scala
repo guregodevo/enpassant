@@ -10,9 +10,10 @@ import scala.math._;
 	   f((x,y))
    }
    
- }
+ } 
  
-class Board(cases:List[List[Piece]],c:Char,castlingK:Boolean,castlingQ:Boolean, castlingk:Boolean,castlingq:Boolean,enPassant:Option[Pair[Int,Int]],halfMv:Int,fullMv:Int) {
+ 
+ class ChessBoard(val cases:List[List[Piece]],val c:Char,val castlingK:Boolean,val castlingQ:Boolean, val castlingk:Boolean, val castlingq:Boolean, val enPassant:Option[Pair[Int,Int]], val halfMv:Int, val fullMv:Int) {
 	lazy val KING_ORIGINAL_POSITION = Map( 'b' -> (4,7), 'w' -> (4,0) )
 	lazy val ROOK_QUEENSIDE_POSITION = Map( 'b' -> (0,7), 'w' -> (0,0) )
 	lazy val ROOK_KINGSIDE_POSITION = Map( 'b' -> (7,7), 'w' -> (7,0) )
@@ -20,38 +21,6 @@ class Board(cases:List[List[Piece]],c:Char,castlingK:Boolean,castlingQ:Boolean, 
 	implicit def tupleConvertor(x: Tuple2[Int,Int]): Position = {
 			new Position(x._1,x._2) 
 	}
-
-  def file(c:Char):Option[Int] = {
-	  c match {
-	 	  case 'a' | 'A' => Some(0)
-	 	  case 'b' | 'B' => Some(1)
-	 	  case 'c' | 'C' => Some(2)
-	 	  case 'd' | 'D' => Some(3)
-	 	  case 'e' | 'e' => Some(4)
-	 	  case 'f' | 'F' => Some(5)
-	 	  case 'g' | 'G' => Some(6)
-	 	  case 'h' | 'H'  => Some(7)
-	 	  case _ => None
-	  }
-  }
-  
-  def file(i:Int):Option[Char] = {
-	  i match {
-	 	  case 0 => Some('a')
-	 	  case 1 => Some('b')
-	 	  case 2 => Some('c')
-	 	  case 3 => Some('d')
-	 	  case 4 => Some('e')
-	 	  case 5 => Some('f')
-	 	  case 6 => Some('g')
-	 	  case 7 => Some('f')
-	 	  case _ => None
-	  }
-  }
-
-  def algebraic(t:Pair[Int,Int]) = {
-		file(t._1).getOrElse("") + (t._2+1).toString   
-  }
   
   def piece(t:Pair[Int,Int]):Option[Piece] = {
 	  piece(t._1,t._2)
@@ -75,37 +44,6 @@ class Board(cases:List[List[Piece]],c:Char,castlingK:Boolean,castlingQ:Boolean, 
   def -|(cases:List[List[Piece]]):List[List[Piece]] = { 	
 		  for { i <- List.range(0,8) } yield List.range(0,8).map( j => cases(j)(i))		  
   }
-  
-  def castlingFEN():String =
-  {
-	  if (!this.castlingK && !this.castlingQ && !this.castlingk && !this.castlingq)
-	 	  "-"
-	  else
-	 	  (if (this.castlingK) "K" else "") + (if (this.castlingQ) "Q" else "") + (if (this.castlingk) "k" else "") + (if (this.castlingq) "q" else "")
-  }
-  
-  def enpassantFEN():String =
-  {
-	  this.enPassant match {
-	 	  case None => "-"
-	 	  case Some((x,y)) => algebraic((x,y))  
-	  }
-  }
-  
-  def toFEN():String = {
-	  val turn = -|(cases)
-	  val fen = for { i<-(0 to 7).reverse } yield toFEN(turn(i),0)
-	  
-	  fen.elements.mkString("/") + " " + List(this.c,castlingFEN,enpassantFEN,this.halfMv,this.fullMv).mkString(" ")
-  }
-
-  def toFEN(row:List[Piece],countO:Int):String = {
-	  row match {
-	 	  case Nil => (if (countO>0) countO.toString else "")
-	 	  case O::rest => toFEN(rest,countO+1)
-	 	  case s::rest => (if (countO>0) countO.toString else "")+s.toString+toFEN(rest,0)
-	  }	  
-  }
 
   def prettyPrint() = {
 	  for { i<-(0 to 7).reverse	
@@ -114,7 +52,6 @@ class Board(cases:List[List[Piece]],c:Char,castlingK:Boolean,castlingQ:Boolean, 
 	   print("|"+cases(j)(i).toString)
 	   if (j==7) println ("|")
 	   }
-	   println(this.toFEN())
   }
 
   def castleKingside(p:Piece, from:Pair[Int,Int]):List[Pair[Int,Int]] = {    
@@ -180,7 +117,7 @@ class Board(cases:List[List[Piece]],c:Char,castlingK:Boolean,castlingQ:Boolean, 
     repFiles(0,squares)
   }
   
-  def <->(from:Pair[Int,Int],to:Pair[Int,Int]):Board = {
+  def <->(from:Pair[Int,Int],to:Pair[Int,Int]):ChessBoard = {
 	  val p = piece(from._1,from._2)
 	  var enPassantPawn:Option[Pair[Int,Int]] = None;
 	  if (this.c=='w' && from._2==1 && to._2==3)
@@ -205,7 +142,7 @@ class Board(cases:List[List[Piece]],c:Char,castlingK:Boolean,castlingQ:Boolean, 
 
 	  val color = (if (this.c == 'w') 'b' else 'w' )
 
-	  Board(<>(adjustedSquares,from,to),color,isCastlingK, isCastlingQ, isCastlingk, isCastlingq, enPassantPawn, this.halfMv+1, this.fullMv+1)
+	  ChessBoard(<>(adjustedSquares,from,to),color,isCastlingK, isCastlingQ, isCastlingk, isCastlingq, enPassantPawn, this.halfMv+1, this.fullMv+1)
   }
 
   
@@ -420,7 +357,7 @@ class Board(cases:List[List[Piece]],c:Char,castlingK:Boolean,castlingQ:Boolean, 
   
 }
 
-object Board {
+object ChessBoard {
 	
 	lazy val _b = {
 		 val ah = R('w')::P('w')::O::O::O::O::P('b')::R('b')::Nil
@@ -429,19 +366,23 @@ object Board {
 		 val d  = Q('w')::P('w')::O::O::O::O::P('b')::Q('b')::Nil
 		 val e  = K('w')::P('w')::O::O::O::O::P('b')::K('b')::Nil
 		 val l:List[List[Piece]] = List(ah,bg,cf,d,e,cf,bg,ah)
-		 val y = new Board(l,'w', true, true, true, true ,None,0,1)
+		 val y = new ChessBoard(l,'w', true, true, true, true ,None,0,1)
 		 y
 	}
 
-	def apply():Board = {
+	def apply():ChessBoard = {
 		 _b
 	}
 		
-	def apply(l:List[List[Piece]],c:Char,castlingK:Boolean,castlingQ:Boolean, castlingk:Boolean,castlingq:Boolean,enPassant:Option[Pair[Int,Int]],halfMv:Int,fullMv:Int):Board = {
-		 val b = new Board(l,c,castlingK,castlingQ, castlingk,castlingq,enPassant,halfMv,fullMv)
+	def apply(l:List[List[Piece]],c:Char,castlingK:Boolean,castlingQ:Boolean, castlingk:Boolean,castlingq:Boolean,enPassant:Option[Pair[Int,Int]],halfMv:Int,fullMv:Int):ChessBoard = {
+		 val b = new ChessBoard(l,c,castlingK,castlingQ, castlingk,castlingq,enPassant,halfMv,fullMv)
 		 b
 	}
-	
+
+	def unapply(b:ChessBoard) = {
+		 Some((b.cases,b.c,b.castlingK,b.castlingQ, b.castlingk,b.castlingq,b.enPassant,b.halfMv,b.fullMv))
+	}
+
 }
 
 sealed trait Piece {
