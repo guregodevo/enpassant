@@ -390,6 +390,7 @@ sealed trait Piece {
 	def sameColor(p: Option[Piece]):Boolean ={
 		color()==p.getOrElse(O).color
 	}
+		
 	override def toString():String = {
 		this match {
 			case R('w') => "R"
@@ -407,6 +408,25 @@ sealed trait Piece {
 			case P('b') => "p"
 		}
 	}	
+}
+
+object Piece {
+		def toPiece(c:Char):Piece = {
+		c match {
+			case 'R' => R('w')
+			case 'r' => R('b')
+			case 'B' => B('w')
+			case 'b' => B('b')
+			case 'N' => N('w')
+			case 'n' => N('b')
+			case 'K' => K('w')
+			case 'k' => K('b')
+			case 'Q' => Q('w')
+			case 'q' => Q('b')
+			case 'P' => P('w')		
+			case 'p' => P('b')
+		}
+	}
 }
 
 case class R(color:Char) extends Piece
