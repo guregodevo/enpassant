@@ -3,52 +3,6 @@ package com.chess.parse
 import com.chess._
 import scala.util.parsing.combinator._
 
-trait SANParser extends RegexParsers {
-
-  lazy val fileChar:Parser[Int] = 	  
-	 	  (elem('a') | elem('A')) ^^^ 0 |
-	 	  (elem('b') | elem('B')) ^^^ 1 |
-	 	  (elem('c') | elem('C')) ^^^ 2 |
-	 	  (elem('d') | elem('D')) ^^^ 3 |
-	 	  (elem('e') | elem('E')) ^^^ 4 |
-	 	  (elem('f') | elem('F')) ^^^ 5 |
-	 	  (elem('g') | elem('G')) ^^^ 6 |
-	 	  (elem('h') | elem('H')) ^^^ 7 
-
-  lazy val rankDigit:Parser[Int] = elem("Rank digit", c => c >='1' && c <='9') ^^ (_.toInt - 49 )
-
-  lazy val move:Parser[Option[(Int,Int)]] = 
-    elem('-') ^^^ None | 
-    fileChar ~ rankDigit ^^ { case f ~ r => Some((f,r)) }
-
-
-  def toInt(file:Char):Option[Int] = {
-	  file match {
-	 	  case 'a' | 'A' => Some(0)
-	 	  case 'b' | 'B' => Some(1)
-	 	  case 'c' | 'C' => Some(2)
-	 	  case 'd' | 'D' => Some(3)
-	 	  case 'e' | 'e' => Some(4)
-	 	  case 'f' | 'F' => Some(5)
-	 	  case 'g' | 'G' => Some(6)
-	 	  case 'h' | 'H'  => Some(7)
-	 	  case _ => None
-	  }
-  }
-  
-}
-
-trait RunParser {
-	this : RegexParsers =>
-	
-	type RootType
-	
-	def root:Parser[RootType]
-
-	def parse(input: String) : ParseResult[RootType] =	parseAll (root, input) 
-
-}
-
 object FENParser extends SANParser with RunParser {
 
 	type RootType = ChessBoard
@@ -89,15 +43,18 @@ object FENParser extends SANParser with RunParser {
 		def toChessboard(l:List[List[List[Piece]]],c:Char,castlingK:Boolean,castlingQ:Boolean,castlingk:Boolean,castlingq:Boolean, enPassant:Option[(Int,Int)],halfMvClock:Int,fullMv:Int) = {
 		  ChessBoard(sort(l),c,castlingK,castlingQ,castlingk,castlingq,enPassant,halfMvClock,fullMv)
 		}
-		(piecePlacement ~ activeColor ~ castlingState ~ enPassant ~ number ~ number) ^^ { case s ~ c ~ castling ~ enPassant ~ halfMvClock ~ fullMv => toChessboard(s,c,castling.contains('K'),castling.contains('Q'),castling.contains('k'),castling.contains('q'),enPassant,halfMvClock, fullMv) }
+		(piecePlacement ~ activeColor ~ castlingState ~ enPassant ~ number ~ number) ^^ { 
+		  case squares ~ color ~ castling ~ enPassant ~ halfMvClock ~ fullMv => 
+		    toChessboard(squares,color,castling.contains('K'),castling.contains('Q'),castling.contains('k'),castling.contains('q'),enPassant,halfMvClock, fullMv) 
+		}
 	}
 
-	def sort(res:List[List[List[Piece]]]) = {
+	def sort(pieceLocations:List[List[List[Piece]]]) = {
 		 def order(cases:List[List[Piece]]):List[List[Piece]] = { 	
 			 for { i <- List.range(0,8) } 
 			 	yield List.range(0,8).reverse.map( j => cases(j)(i))		  
 		 }
-		 order(res.map(x => x.flatten))
+		 order(pieceLocations.map(x => x.flatten))
 	}
 	
 	lazy val root = gameParser
