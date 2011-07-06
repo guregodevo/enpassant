@@ -1,6 +1,8 @@
 apply {
+    plugin 'java'
     plugin 'scala'
     plugin 'eclipse'
+    plugin 'war'
     plugin 'jetty'
 }
 repositories {
@@ -8,13 +10,14 @@ repositories {
     mavenRepo ( urls : 'http://jansi.fusesource.org/repo/release' )
 }
 
+
 dependencies {
     // Libraries needed to run the scala tools
-    scalaTools 'org.scala-lang:scala-compiler:2.9.0'
-    scalaTools 'org.scala-lang:scala-library:2.9.0'
+    scalaTools 'org.scala-lang:scala-compiler:2.8.1'
+    scalaTools 'org.scala-lang:scala-library:2.8.1'
 
     // Libraries needed for scala api
-    compile 'org.scala-lang:scala-library:2.9.0'
+    compile 'org.scala-lang:scala-library:2.8.1'
 
 	compile 'org.mortbay.jetty:servlet-api:2.5-20081211'
 
@@ -24,11 +27,11 @@ dependencies {
 
 	compile 'org.scalatra:scalatra-scalate_2.8.1:2.0.0.M2'
 
-	testCompile 'org.scala-tools.testing:specs_2.9.0:1.6.8'
+	testCompile 'org.scala-tools.testing:specs_2.8.1:1.6.8'
 
 	testCompile 'org.scalatra:scalatra-test_2.8.1:2.0.0.M3'
 
-	testCompile 'org.scalatest:scalatest_2.9.0:1.6.1'
+	testCompile 'org.scalatest:scalatest_2.8.1:1.5.1'
 
     testCompile "junit:junit:4.8.2"
  
