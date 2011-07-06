@@ -14,7 +14,9 @@ case class Tag(name: String, value: String)
 case class MoveElement(move: SAN, comment: String)
 case class SAN(value: String)
 
-class PGNParser extends JavaTokenParsers with ImplicitConversions {
+object PGNParser extends JavaTokenParsers with ImplicitConversions with RunParser {
+
+  type RootType = List[Game]
 
   def moveNumberParser: Parser[Int] = ("""\d+""".r <~ """\.+""".r) ^^ (_.toInt)
 
@@ -70,6 +72,10 @@ class PGNParser extends JavaTokenParsers with ImplicitConversions {
     def toGame(tags: List[Tag], moves: List[MoveElement], termination: Termination) = Game(tags, moves, termination)
     (tagSectionToken ~ moveTextSectionParser ~ gameTerminationParser) ^^ toGame
   }
+  
+  def root:Parser[List[Game]] = (gameParser +) ^^ (List() ++ _)
 
-  def value: Parser[List[Game]] = (gameParser +) ^^ (List() ++ _)
+
+
+
 }
