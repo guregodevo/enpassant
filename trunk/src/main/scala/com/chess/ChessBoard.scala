@@ -4,24 +4,13 @@ import scala.collection.immutable._;
 import java.lang.IllegalArgumentException;
 import scala.math._;
 
- class Position(x: Int, y:Int) {
-   
-   def --(f:Pair[Int,Int]=>Pair[Int,Int]):Pair[Int,Int] = {
-	   f((x,y))
-   }
-   
- } 
  
  
  class ChessBoard(val cases:List[List[Piece]],val c:Char,val castlingK:Boolean,val castlingQ:Boolean, val castlingk:Boolean, val castlingq:Boolean, val enPassant:Option[Pair[Int,Int]], val halfMv:Int, val fullMv:Int) {
 	lazy val KING_ORIGINAL_POSITION = Map( 'b' -> (4,7), 'w' -> (4,0) )
 	lazy val ROOK_QUEENSIDE_POSITION = Map( 'b' -> (0,7), 'w' -> (0,0) )
 	lazy val ROOK_KINGSIDE_POSITION = Map( 'b' -> (7,7), 'w' -> (7,0) )
-	
-	implicit def tupleConvertor(x: Tuple2[Int,Int]): Position = {
-			new Position(x._1,x._2) 
-	}
-  
+	  
   def piece(t:Pair[Int,Int]):Option[Piece] = {
 	  piece(t._1,t._2)
   }

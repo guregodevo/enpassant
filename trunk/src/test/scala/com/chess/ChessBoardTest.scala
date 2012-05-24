@@ -1,11 +1,11 @@
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 import org.scalatest.matchers.ShouldMatchers
-import org.scalatest.Spec
+import org.scalatest.FunSpec
 import com.chess._
 
 @RunWith(classOf[JUnitRunner])
-class ChessBoardTest extends Spec with ShouldMatchers {
+class ChessBoardTest extends FunSpec with ShouldMatchers {
   describe("ChessBoard") {
     it("should be instanted properly") {
     	val l = ChessBoard()
@@ -122,9 +122,6 @@ class ChessBoardTest extends Spec with ShouldMatchers {
       val o = n.<->((4,0),(6,0))
       o.piece(5,0).get should be (R('w'))
       o.piece(6,0).get should be (K('w'))
-      
-      o.prettyPrint
-      
       o.legalMoves(4,7) should be (List((5,7),(6,7)))
       
     }

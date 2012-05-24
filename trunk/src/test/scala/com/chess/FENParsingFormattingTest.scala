@@ -3,14 +3,14 @@ package com.chess
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 import org.scalatest.matchers.ShouldMatchers
-import org.scalatest.Spec
+import org.scalatest.FunSpec
 import com.chess._
 import com.chess.parse._
 import com.chess.format._
 import scala.util.parsing.combinator._
 
 @RunWith(classOf[JUnitRunner])
-class FENParsingFormattingTest extends Spec with ShouldMatchers {
+class FENParsingFormattingTest extends FunSpec with ShouldMatchers {
   describe("FEN notation parsing") {
     it("should parse FEN for the starting position") {
        	val fenIn = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
@@ -35,8 +35,7 @@ class FENParsingFormattingTest extends Spec with ShouldMatchers {
        	val b = FENParser.parse(fenIn).get
        	val fenOut = FenFormatter.format(b)
     	(fenIn) should be (fenOut) 
-    }
-    
+    }    
   }
 
   describe("FEN picked up from chess website") {
