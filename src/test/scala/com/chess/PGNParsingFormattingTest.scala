@@ -3,7 +3,7 @@ package com.chess
 import org.scalatest.junit.JUnitRunner
 import org.junit.runner.RunWith
 import org.scalatest.matchers.ShouldMatchers
-import org.scalatest.Spec
+import org.scalatest.FunSpec
 import com.chess._
 import com.chess.parse._
 import com.chess.format._
@@ -11,7 +11,7 @@ import scala.util.parsing.combinator._
 import java.io._
 
 @RunWith(classOf[JUnitRunner])
-class PGNParsingFormattingTest extends Spec with ShouldMatchers {
+class PGNParsingFormattingTest extends FunSpec with ShouldMatchers {
   
   describe("PGN notation parsing") {
     it("should parse PGN file for standard game PGN notation") {
