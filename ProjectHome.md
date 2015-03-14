@@ -1,0 +1,1 @@
+Enpassant is a Chess game engine written in Scala.
